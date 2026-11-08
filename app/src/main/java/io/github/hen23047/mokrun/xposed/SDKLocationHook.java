@@ -1,4 +1,4 @@
-package com.dsh.mokr.xposed;
+package io.github.hen23047.mokrun.xposed;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;

@@ -28,8 +28,8 @@ $stamp   = (Get-Date).ToString("yyyyMMdd-HHmm")
 Set-Content -Path $verFile -Value $verCode -Encoding ascii
 Write-Host ("version: $verName (code=$verCode)") -ForegroundColor Yellow
 
-$bctPath = Join-Path $javad "com\dsh\mokr\BuildConfigTag.java"
-$bct = "package com.dsh.mokr;`r`n" +
+$bctPath = Join-Path $javad "io\github\hen23047\mokrun\BuildConfigTag.java"
+$bct = "package io.github.hen23047.mokrun;`r`n" +
        "public final class BuildConfigTag {`r`n" +
        "    public static final String VERSION = `"$verName`";`r`n" +
        "    public static final int CODE = $verCode;`r`n" +
@@ -81,7 +81,7 @@ $srcs += Get-ChildItem (Join-Path $out "gen") -Recurse -Filter *.java | ForEach-
 if ($LASTEXITCODE -ne 0) { throw "javac failed ($LASTEXITCODE)" }
 
 Step 5 "d8"
-$classes = Get-ChildItem (Join-Path $out "classes\com") -Recurse -Filter *.class | ForEach-Object { $_.FullName }
+$classes = Get-ChildItem (Join-Path $out "classes\io") -Recurse -Filter *.class | ForEach-Object { $_.FullName }
 & $javaExe -cp $d8jar com.android.tools.r8.D8 --release --min-api 26 --lib $androidJar --output (Join-Path $out "dex") $classes 2>&1 | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw "d8 failed ($LASTEXITCODE)" }
 

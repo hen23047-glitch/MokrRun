@@ -1,4 +1,4 @@
-package com.dsh.mokr;
+package io.github.hen23047.mokrun;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -11,8 +11,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.dsh.mokr.data.ConfigSync;
-import com.dsh.mokr.data.Store;
+import io.github.hen23047.mokrun.data.ConfigSync;
+import io.github.hen23047.mokrun.data.Store;
 
 import java.util.Locale;
 

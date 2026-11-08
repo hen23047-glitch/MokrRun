@@ -1,7 +1,7 @@
 ﻿# 一键安装 MokrRun APK 到手机（处理 MIUI 的两层确认框）
 param(
     [string]$Apk = "",
-    [string]$Pkg = "com.dsh.mokr"
+    [string]$Pkg = "io.github.hen23047.mokrun"
 )
 if (-not $Apk) { $Apk = Join-Path $PSScriptRoot "build\MokrRun.apk" }
 $ErrorActionPreference = "Continue"

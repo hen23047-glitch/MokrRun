@@ -1,4 +1,4 @@
-package com.dsh.mokr.data;
+package io.github.hen23047.mokrun.data;
 
 import android.Manifest;
 import android.content.Context;

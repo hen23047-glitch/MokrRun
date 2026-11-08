@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.dsh.mokr"
-    android:versionCode="75"
-    android:versionName="1.0.75">
+    package="io.github.hen23047.mokrun"
+    android:versionCode="80"
+    android:versionName="1.0.80">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -64,7 +64,7 @@
 
         <provider
             android:name=".data.ConfigProvider"
-            android:authorities="com.dsh.mokr.config"
+            android:authorities="io.github.hen23047.mokrun.config"
             android:exported="true" />
 
         <service

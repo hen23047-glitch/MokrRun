@@ -1,4 +1,4 @@
-package com.dsh.mokr;
+package io.github.hen23047.mokrun;
 
 import android.app.Notification;
 import android.app.NotificationChannel;

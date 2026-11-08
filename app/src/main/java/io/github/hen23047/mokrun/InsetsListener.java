@@ -1,4 +1,4 @@
-package com.dsh.mokr;
+package io.github.hen23047.mokrun;
 
 import android.view.View;
 import android.view.WindowInsets;

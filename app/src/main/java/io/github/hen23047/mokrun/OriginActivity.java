@@ -1,4 +1,4 @@
-package com.dsh.mokr;
+package io.github.hen23047.mokrun;
 
 import android.Manifest;
 import android.app.Activity;
@@ -14,9 +14,9 @@ import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.dsh.mokr.data.ConfigSync;
-import com.dsh.mokr.data.LocationHelper;
-import com.dsh.mokr.data.Store;
+import io.github.hen23047.mokrun.data.ConfigSync;
+import io.github.hen23047.mokrun.data.LocationHelper;
+import io.github.hen23047.mokrun.data.Store;
 
 import java.util.Locale;
 
@@ -121,12 +121,7 @@ public class OriginActivity extends Activity {
             return;
         }
         Store.setOrigin(this, curLat, curLon);
-        if (!ConfigSync.canWrite(this)) {
-                ConfigSync.requestWrite(this);
-                Toast.makeText(this, "请先授予「修改系统设置」", Toast.LENGTH_LONG).show();
-                return;
-            }
-            ConfigSync.push(this);
+        ConfigSync.push(this);
         // 冻结在这个起点，让体适能立刻看到
         ConfigSync.setMode(this, 2);
         Toast.makeText(this, "起点已确定", Toast.LENGTH_SHORT).show();

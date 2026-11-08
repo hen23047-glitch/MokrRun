@@ -1,4 +1,4 @@
-package com.dsh.mokr;
+package io.github.hen23047.mokrun;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,8 +7,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-import com.dsh.mokr.data.ConfigSync;
-import com.dsh.mokr.data.Store;
+import io.github.hen23047.mokrun.data.ConfigSync;
+import io.github.hen23047.mokrun.data.Store;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -75,11 +75,6 @@ public class MapActivity extends Activity {
 
             Store.addHistory(this, route);
             Store.syncOriginFromActive(this);
-            if (!ConfigSync.canWrite(this)) {
-                ConfigSync.requestWrite(this);
-                Toast.makeText(this, "请先授予「修改系统设置」", Toast.LENGTH_LONG).show();
-                return;
-            }
             ConfigSync.push(this);
             // 就绪但不开始：位置冻结在起点，等用户点悬浮窗的「开始」
             ConfigSync.setMode(this, 2);
