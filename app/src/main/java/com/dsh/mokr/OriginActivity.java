@@ -121,7 +121,12 @@ public class OriginActivity extends Activity {
             return;
         }
         Store.setOrigin(this, curLat, curLon);
-        ConfigSync.push(this);
+        if (!ConfigSync.canWrite(this)) {
+                ConfigSync.requestWrite(this);
+                Toast.makeText(this, "请先授予「修改系统设置」", Toast.LENGTH_LONG).show();
+                return;
+            }
+            ConfigSync.push(this);
         // 冻结在这个起点，让体适能立刻看到
         ConfigSync.setMode(this, 2);
         Toast.makeText(this, "起点已确定", Toast.LENGTH_SHORT).show();

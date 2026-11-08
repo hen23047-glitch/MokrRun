@@ -78,8 +78,9 @@ public final class MotionEngine {
         if (now - sRunCheckedAt < 400L) return sMode;
         sRunCheckedAt = now;
         if (sCtx == null) return sMode;
+        if (readProvider()) return sMode;
         try {
-            String v = android.provider.Settings.Global.getString(
+            String v = android.provider.Settings.System.getString(
                     sCtx.getContentResolver(), "mokr_run");
             if (v == null) {
                 sMode = 0;
@@ -143,14 +144,52 @@ public final class MotionEngine {
 
     // ---- config ------------------------------------------------------------
 
+    /**
+     * 主通道：模块 App 的 ContentProvider。
+     * App 有常驻前台服务，provider 一定活着，MIUI 不会拦冷启动。
+     * 传的都是 App 本地 prefs 里的值，读写都不需要特殊权限。
+     */
+    private static boolean readProvider() {
+        if (sCtx == null) return false;
+        android.database.Cursor c = null;
+        try {
+            c = sCtx.getContentResolver().query(
+                    android.net.Uri.parse("content://com.dsh.mokr.config/config"),
+                    null, null, null, null);
+            if (c == null || !c.moveToFirst()) return false;
+            float sp = c.getFloat(0);
+            float cd = c.getFloat(1);
+            float st = c.getFloat(2);
+            String origin = c.getString(4);
+            String route = c.getString(5);
+            int run = c.getInt(6);
+            applyOriginRoute(origin, route);
+            applyConfigInner(sp, cd, st, route);
+            sMode = run;
+            sRunCheckedAt = System.currentTimeMillis();
+            return true;
+        } catch (Throwable t) {
+            XposedBridge.log(TAG + ": provider read failed " + t);
+            return false;
+        } finally {
+            if (c != null) {
+                try { c.close(); } catch (Throwable ignored) {}
+            }
+        }
+    }
+
     private static synchronized boolean tryRead() {
         if (sCtx == null) return false;
+        if (readProvider()) {
+            sConfigLoaded = true;
+            return true;
+        }
         try {
-            String cfg = android.provider.Settings.Global.getString(
+            String cfg = android.provider.Settings.System.getString(
                     sCtx.getContentResolver(), "mokr_config");
-            String origin = android.provider.Settings.Global.getString(
+            String origin = android.provider.Settings.System.getString(
                     sCtx.getContentResolver(), "mokr_origin");
-            String b64 = android.provider.Settings.Global.getString(
+            String b64 = android.provider.Settings.System.getString(
                     sCtx.getContentResolver(), "mokr_route_b64");
 
             if (cfg != null && cfg.length() > 5) {
@@ -190,6 +229,13 @@ public final class MotionEngine {
             XposedBridge.log(TAG + ": config read failed " + t);
             return false;
         }
+    }
+
+    /** 只更新参数，不动路线（路线由 applyOriginRoute 负责） */
+    private static void applyConfigInner(float speed, float cadence, float stride, String route) {
+        if (speed > 0.1f) sSpeed = speed;
+        if (cadence > 0.1f) sCadence = cadence;
+        if (stride > 0.2f) sStride = stride;
     }
 
     /** 起点 + 途经点 → 路线数组；起点变了就重置到起点 */

@@ -154,6 +154,17 @@ public final class Store {
     // ---- settings ----------------------------------------------------------
 
 
+
+    // ---- 运行状态（0 停止 / 1 运行 / 2 就绪暂停）--------------------------
+
+    public static int runMode(Context ctx) {
+        return prefs(ctx).getInt("runMode", 0);
+    }
+
+    public static void setRunMode(Context ctx, int mode) {
+        prefs(ctx).edit().putInt("runMode", mode).apply();
+    }
+
     // ---- 速度 / 步频 / 步长 联动 -------------------------------------------
 
     /** 基准：2.5 m/s 对应 2.2 步/秒，越快步子迈得越频 */

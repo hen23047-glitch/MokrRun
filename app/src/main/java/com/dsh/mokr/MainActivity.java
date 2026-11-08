@@ -66,6 +66,9 @@ public class MainActivity extends Activity {
         });
 
         setupHomeMap();
+        KeepAliveService.start(this);
+        ensureWritePermission();
+
     }
 
     // ---- home map ----------------------------------------------------------
@@ -130,10 +133,32 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    /** 这个权限只能用户手动给，所以进来先引导一次 */
+    private void ensureWritePermission() {
+        if (ConfigSync.canWrite(this)) return;
+        new AlertDialog.Builder(this)
+                .setTitle("还差一个权限")
+                .setMessage("需要「修改系统设置」权限，用来把路线和速度传给体适能。"
+                        + "\n\n在打开的页面里找到「随心跑」，打开开关即可，只需授权一次。")
+                .setPositiveButton("去授权", new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface d, int w) {
+                        ConfigSync.requestWrite(MainActivity.this);
+                    }
+                })
+                .setNegativeButton("稍后", null)
+                .show();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         refreshAll();
+        if (!ConfigSync.canWrite(this)) {
+            // 刚从授权页回来但没给权限，静默提示
+            Toast.makeText(this, "尚未授予「修改系统设置」，配置无法下发",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     // ---- refresh -----------------------------------------------------------

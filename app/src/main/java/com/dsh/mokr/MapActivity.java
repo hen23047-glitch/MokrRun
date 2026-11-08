@@ -75,6 +75,11 @@ public class MapActivity extends Activity {
 
             Store.addHistory(this, route);
             Store.syncOriginFromActive(this);
+            if (!ConfigSync.canWrite(this)) {
+                ConfigSync.requestWrite(this);
+                Toast.makeText(this, "请先授予「修改系统设置」", Toast.LENGTH_LONG).show();
+                return;
+            }
             ConfigSync.push(this);
             // 就绪但不开始：位置冻结在起点，等用户点悬浮窗的「开始」
             ConfigSync.setMode(this, 2);
