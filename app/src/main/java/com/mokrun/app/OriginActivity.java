@@ -1,4 +1,4 @@
-package io.github.hen23047.mokrun;
+package com.mokrun.app;
 
 import android.Manifest;
 import android.app.Activity;
@@ -14,9 +14,9 @@ import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import io.github.hen23047.mokrun.data.ConfigSync;
-import io.github.hen23047.mokrun.data.LocationHelper;
-import io.github.hen23047.mokrun.data.Store;
+import com.mokrun.app.data.ConfigSync;
+import com.mokrun.app.data.LocationHelper;
+import com.mokrun.app.data.Store;
 
 import java.util.Locale;
 
@@ -74,6 +74,13 @@ public class OriginActivity extends Activity {
     }
 
     class OriginBridge {
+        @JavascriptInterface
+        public void requestLocation() {
+            runOnUiThread(new Runnable() {
+                @Override public void run() { useCurrentLocation(); }
+            });
+        }
+
         @JavascriptInterface
         public void onCenter(double lat, double lon) {
             curLat = lat;

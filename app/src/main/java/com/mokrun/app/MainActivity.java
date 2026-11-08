@@ -1,9 +1,11 @@
-package io.github.hen23047.mokrun;
+package com.mokrun.app;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.View;
@@ -16,9 +18,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import io.github.hen23047.mokrun.data.ConfigSync;
-import io.github.hen23047.mokrun.data.LocationHelper;
-import io.github.hen23047.mokrun.data.Store;
+import com.mokrun.app.data.ConfigSync;
+import com.mokrun.app.data.LocationHelper;
+import com.mokrun.app.data.Store;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -67,6 +69,8 @@ public class MainActivity extends Activity {
 
         setupHomeMap();
         KeepAliveService.start(this);
+        ensureLocationPermission();
+
 
     }
 
@@ -132,6 +136,27 @@ public class MainActivity extends Activity {
         }
     }
 
+
+
+    /** 定位权限是运行时权限，装完必须主动要一次，否则地图定位按钮是死的 */
+    private void ensureLocationPermission() {
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        requestPermissions(new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        }, 1001);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int req, String[] perms, int[] res) {
+        super.onRequestPermissionsResult(req, perms, res);
+        if (req == 1001) {
+            renderMap();   // 拿到权限后立刻刷新一次
+        }
+    }
 
     @Override
     protected void onResume() {

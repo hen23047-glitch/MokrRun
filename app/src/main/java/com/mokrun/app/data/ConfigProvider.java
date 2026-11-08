@@ -1,4 +1,4 @@
-package io.github.hen23047.mokrun.data;
+package com.mokrun.app.data;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -19,7 +19,7 @@ import android.util.Log;
 public class ConfigProvider extends ContentProvider {
 
     private static final String TAG = "MokrRunCfg";
-    public static final String AUTHORITY = "io.github.hen23047.mokrun.config";
+    public static final String AUTHORITY = "com.mokrun.app.config";
     public static final Uri URI = Uri.parse("content://" + AUTHORITY + "/config");
 
     @Override
@@ -60,7 +60,7 @@ public class ConfigProvider extends ContentProvider {
 
     @Override
     public String getType(Uri uri) {
-        return "vnd.android.cursor.item/vnd.io.github.hen23047.mokrun.config";
+        return "vnd.android.cursor.item/vnd.com.mokrun.app.config";
     }
 
     @Override

@@ -1,4 +1,4 @@
-package io.github.hen23047.mokrun.xposed;
+package com.mokrun.app.xposed;
 
 import android.content.Context;
 
@@ -11,12 +11,12 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 /**
  * Module entry point.
  *  - com.bxkj.student      : real target, installs the motion simulation
- *  - io.github.hen23047.mokrun.probe    : test fixture, reports "injected" to its UI
+ *  - com.mokrun.app.probe    : test fixture, reports "injected" to its UI
  */
 public class ModuleEntry implements IXposedHookLoadPackage {
 
     public static final String TARGET = "com.bxkj.student";
-    public static final String PROBE = "io.github.hen23047.mokrun.probe";
+    public static final String PROBE = "com.mokrun.app.probe";
     public static final String TAG = "MokrRun";
 
     @Override
@@ -65,7 +65,7 @@ public class ModuleEntry implements IXposedHookLoadPackage {
         XposedBridge.log(TAG + ": attached to probe " + lpparam.processName);
         try {
             Class<?> status = XposedHelpers.findClass(
-                    "io.github.hen23047.mokrun.probe.ProbeStatus", lpparam.classLoader);
+                    "com.mokrun.app.probe.ProbeStatus", lpparam.classLoader);
             XposedHelpers.callStaticMethod(status, "setInjected", Boolean.TRUE);
             XposedHelpers.callStaticMethod(status, "log", "模块已注入探针进程");
         } catch (Throwable t) {

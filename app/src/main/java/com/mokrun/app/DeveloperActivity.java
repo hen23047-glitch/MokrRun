@@ -1,4 +1,4 @@
-package io.github.hen23047.mokrun;
+package com.mokrun.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -12,8 +12,8 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import io.github.hen23047.mokrun.data.ConfigSync;
-import io.github.hen23047.mokrun.data.Store;
+import com.mokrun.app.data.ConfigSync;
+import com.mokrun.app.data.Store;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

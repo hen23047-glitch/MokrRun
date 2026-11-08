@@ -1,4 +1,4 @@
-package io.github.hen23047.mokrun.xposed;
+package com.mokrun.app.xposed;
 
 import android.app.Activity;
 import android.content.Intent;

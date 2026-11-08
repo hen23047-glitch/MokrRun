@@ -1,4 +1,4 @@
-package io.github.hen23047.mokrun;
+package com.mokrun.app;
 
 import android.content.Context;
 import android.content.Intent;

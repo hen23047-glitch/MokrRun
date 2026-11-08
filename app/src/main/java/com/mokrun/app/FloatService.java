@@ -1,4 +1,4 @@
-package io.github.hen23047.mokrun;
+package com.mokrun.app;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -23,8 +23,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import io.github.hen23047.mokrun.data.ConfigSync;
-import io.github.hen23047.mokrun.data.Store;
+import com.mokrun.app.data.ConfigSync;
+import com.mokrun.app.data.Store;
 
 import java.util.Locale;
 

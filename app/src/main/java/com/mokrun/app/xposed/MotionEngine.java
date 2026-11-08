@@ -1,4 +1,4 @@
-package io.github.hen23047.mokrun.xposed;
+package com.mokrun.app.xposed;
 
 import android.location.Location;
 import android.location.LocationListener;
@@ -154,7 +154,7 @@ public final class MotionEngine {
         android.database.Cursor c = null;
         try {
             c = sCtx.getContentResolver().query(
-                    android.net.Uri.parse("content://io.github.hen23047.mokrun.config/config"),
+                    android.net.Uri.parse("content://com.mokrun.app.config/config"),
                     null, null, null, null);
             if (c == null || !c.moveToFirst()) return false;
             float sp = c.getFloat(0);
