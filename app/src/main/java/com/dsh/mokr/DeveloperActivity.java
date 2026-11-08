@@ -13,7 +13,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dsh.mokr.data.ConfigSync;
-import com.dsh.mokr.data.RootShell;
 import com.dsh.mokr.data.Store;
 
 import org.json.JSONArray;
@@ -45,32 +44,6 @@ public class DeveloperActivity extends Activity {
             @Override public void onClick(View v) {
                 copy(routesJson());
                 toast("路线 JSON 已复制");
-            }
-        });
-
-        findViewById(R.id.toolRoot).setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                Toast.makeText(DeveloperActivity.this, "正在检测 root…", Toast.LENGTH_SHORT).show();
-                new Thread(new Runnable() {
-                    @Override public void run() {
-                        final StringBuilder sb = new StringBuilder();
-                        final String su = RootShell.findSu();
-                        sb.append("可用 su: ").append(su == null ? "未找到" : su);
-                        if (su != null) {
-                            String id = RootShell.exec("id");
-                            sb.append("\nid: ").append(id == null ? "null" : id.trim());
-                        }
-                        runOnUiThread(new Runnable() {
-                            @Override public void run() {
-                                new AlertDialog.Builder(DeveloperActivity.this)
-                                        .setTitle("Root 检测")
-                                        .setMessage(sb.toString())
-                                        .setPositiveButton("好", null)
-                                        .show();
-                            }
-                        });
-                    }
-                }).start();
             }
         });
 

@@ -1,204 +1,164 @@
-# 随心跑 (MokrRun)
+<div align="center">
 
-体适能 / 阳光跑 的轨迹与步数模拟模块。LSPosed 模块 + 独立控制 App。
+<img src="app/src/main/res/drawable-nodpi/mask_icon.png" width="120" alt="MokrRun" />
 
-- 模块 App：`com.dsh.mokr`（UI + 配置 + 悬浮窗）
-- 注入目标：`com.bxkj.student`（体适能）
-- 探针夹具：`com.dsh.mokr.probe`（独立工程，`tools/probe/`）
+# 随心跑 · MokrRun
 
-> **许可**：MIT，见 [LICENSE](LICENSE)。本项目仅供学习 LSPosed / Android 定位与传感器 API 的 hook 技术使用。
+**在地图上画一条线，让它替你跑完**
 
----
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Android%208.0%2B-green.svg)](#-兼容性)
+[![Framework](https://img.shields.io/badge/framework-LSPosed-purple.svg)](#-安装)
+[![Version](https://img.shields.io/badge/version-1.0.74-orange.svg)](../../releases)
 
-## 一、它现在能做什么
+一个 LSPosed 模块，把「校园跑」类应用的轨迹与步数变成可规划、可调速的模拟。
 
-| 功能 | 状态 | 验证方式 |
-|---|---|---|
-| 地图绘制路线（高德瓦片，免 SDK） | ✅ | 手机上画 6 点 / 519 m，保存后首页显示 |
-| 参数配置（速度 / 步频 / 步长 / 检测绕过） | ✅ | 改值后写进 `Settings.Global`，hook 读到 |
-| 位置伪造 | ✅ | `getLastKnownLocation` 四个 provider 全部返回合成坐标 |
-| 位置沿路线推进 | ✅ | 日志连续采样：经纬度同时变化，5 秒 15 m |
-| 步数与位置同源 | ✅ | 10.3 秒 22 步（2.14 步/秒），与 3 m/s 同步 |
-| 悬浮窗控制 | ✅ | 可拖动，开始/暂停写 `mokr_run`，引擎即时响应 |
-| 反检测 | ✅ | `Location.isMock` / `isFromMockProvider` 恒 false，模拟定位类 app 从包列表隐藏 |
-| 首页状态联动 | ✅ | 显示「运行中 / 已就绪 / 待下发」 |
+</div>
 
 ---
 
-## 二、架构
+## ✨ 特性
 
-```
-┌────────────────────┐                      ┌──────────────────────────┐
-│  随心跑 App         │   Settings.Global    │  体适能进程 (hook)        │
-│  com.dsh.mokr      │ ───────────────────→ │                          │
-│                    │                      │  MotionEngine            │
-│  MainActivity      │  mokr_config         │   ├ 250ms tick           │
-│   ├ 首页/路线/设置  │  speed=3.0;...       │   ├ 沿路线插值推进         │
-│   ├ MapActivity    │                      │   └ 按 cadence 产步数      │
-│   └ DeveloperActivity                     │                          │
-│                    │  mokr_route_b64      │  LocationProbe           │
-│  FloatService      │  base64(路线 JSON)   │   └ 替换所有位置读取       │
-│   └ 悬浮窗          │                      │                          │
-│                    │  mokr_run            │  SensorHook              │
-│  ConfigSync        │  1 / 0               │   └ 注入 step_counter    │
-│   └ 写 Global      │                      │                          │
-└────────────────────┘                      │  AntiDetect              │
-                                            │   └ mock 标记恒 false    │
-                                            └──────────────────────────┘
-```
+- **🗺️ 地图上画路线** — 全屏地图点几个途经点，起点自动取你的真实位置
+- **🎯 位置与步数同源** — 同一个 250ms tick 驱动，物理上不可能出现「步数涨了位置没动」
+- **⏯️ 悬浮窗控制** — 可拖动的悬浮面板，开始 / 暂停 / 继续 / 结束一键切换
+- **🎚️ 实时调速** — 拖动速度条，速度和步频立即跟着变，不用回 App
+- **📏 自动换算** — 改速度时步频与步长按真人步态规律自动算出
+- **🕶️ 反检测** — mock 标记恒为 false，模拟定位类应用从包列表隐藏
+- **🔒 零权限门槛** — 不需要 adb、不需要 root，装上勾选就能用
+- **📝 最近三条路线** — 画过的路线自动留档，超出三条淘汰最旧的
 
-### 为什么用 Settings.Global
+## 📸 界面
 
-试过并放弃的四条通道：
+| 主页 | 画线 | 悬浮窗 |
+|:---:|:---:|:---:|
+| 地图预览 + 起点 / 画线入口 | 起点固定，点击加途经点 | 距离 / 步数 / 速度条 |
 
-| 通道 | 失败原因 |
+> 截图待补充
+
+## 🚀 安装
+
+### 环境要求
+
+| 项 | 要求 |
 |---|---|
-| `XSharedPreferences` | Android 14 + LSPosed 2.2 读不到（返回默认值） |
-| `ContentProvider` | MIUI 拦跨应用访问，`query` 返回 null |
-| 显式广播 | `process is not permitted to auto start`（MIUI 自启动限制） |
-| root 写文件 | `su` 不在 App 可访问路径（SukiSU 只对白名单开放） |
+| Android | 8.0 及以上 |
+| Root | 需要（解锁 Bootloader） |
+| 框架 | LSPosed（或兼容的 Xposed 实现） |
 
-`Settings.Global` 是唯一两条路都通的：**读端零权限**（hook 侧直接用），**写端一次 adb 授权**即可。
+### 步骤
 
-> 格式刻意做成无引号：`speed=3.0;cadence=2.2;stride=1.1;anti=1`
-> 路线太大且含引号，单独走 `mokr_route_b64`（base64）。
+1. 从 [Releases](../../releases) 下载最新 `MokrRun-x.x.x.apk`
+2. 安装后打开 **LSPosed**，在模块列表里启用「随心跑」
+3. 进入模块的作用域设置，**勾选目标应用**（默认 `com.bxkj.student`）
+4. 强制停止目标应用一次，让它重新加载模块
 
----
+> 第一次打开「随心跑」时，需要手动允许**悬浮窗**和**定位**权限。
 
-## 三、构建
-
-无 Gradle，手工流水线：
+## 📖 使用
 
 ```
-aapt2 compile → aapt2 link → javac → d8 → zip → zipalign → apksigner
+① 打开「随心跑」→ 点「修改起点」→ 拖动地图对准起点 → 确定
+② 点「绘制路线」→ 点几个途经点 → 保存
+   （悬浮窗出现，显示「就绪」）
+③ 切到目标应用，进入跑步页面
+④ 点悬浮窗「开始」→ 位置开始沿你画的路线移动
 ```
+
+运行中随时可以：
+
+- 拖动悬浮窗移动位置
+- 拖速度条调整快慢（步频同步变化）
+- 「暂停」冻结在原地，「结束」交还真实位置
+
+## 🔧 工作原理
+
+```
+┌──────────────────┐                    ┌───────────────────┐
+│  MokrRun App     │   Intent extras    │  目标应用进程       │
+│                  │ ─────────────────→ │                   │
+│ 画路线 / 调参数    │  启动时带配置       │  MotionEngine     │
+│ 悬浮窗控制        │                    │   ├ 位置插值推进   │
+│                  │                    │   └ 步数生成       │
+└──────────────────┘                    │                   │
+                                        │  LocationHook     │
+                                        │   └ 接管定位读取   │
+                                        │  SensorHook       │
+                                        │   └ 注入步数       │
+                                        └───────────────────┘
+```
+
+几个关键设计：
+
+**配置走 Intent，不走跨进程通信**
+点「开始」时把速度、起点、途经点塞进启动 Intent，hook 在 `Activity.onCreate` 和 `onNewIntent` 里读出来。这是一次标准的 Activity 启动，不需要任何特殊权限。
+
+**位置和步数由同一个 tick 驱动**
+每 250ms 推进一次：位置沿折线插值前进，步数按步频累加。两者共享同一个时间轴，不会漂移。
+
+**接管所有定位读取**
+不仅拦 `LocationManager`，还 hook 了高德地图 SDK 的 `AMapLocation.getLatitude()` 等方法——因为高德有自己的网络定位，不走系统 API。
+
+## 🧩 兼容性
+
+| 环境 | 状态 | 说明 |
+|---|---|---|
+| 原生 Android / LineageOS | ✅ | 配置通道直接可用 |
+| MIUI / 澎湃 OS | ✅ | 已适配，无需额外授权 |
+| 目标应用 `com.bxkj.student` | ✅ | 测试于 v2.0.22 |
+
+> 其他「校园跑」应用理论上可用，但需要在模块设置里把包名改掉，
+> 且定位 SDK 不同的话可能要补充对应的 hook。
+
+## 🛠️ 从源码构建
+
+没有 Gradle，用一套手工流水线（`aapt2 → javac → d8 → zipalign → apksigner`）。
 
 ### 1. 准备工具链
 
-需要一个目录（下称 `$MOKR_TOOLS`）包含：
+把下面这几样放进同一个目录（下称 `$MOKR_TOOLS`）：
 
-| 组件 | 相对路径 | 备注 |
-|---|---|---|
-| JDK（含 javac） | `jdk/` | 21 或 17 均可 |
-| Android build-tools | `bt/android-14/` | 提供 aapt2 / zipalign / apksigner |
-| **r8** | `r8/r8.jar` | **必需**：build-tools 自带的 d8 8.2.2 处理内部类会 NPE |
-| android.jar | `android.jar` | API 34 |
+```
+$MOKR_TOOLS/
+├── jdk/                  JDK 17 或 21
+├── bt/android-14/        Android build-tools（含 aapt2 / zipalign / apksigner）
+├── r8/r8.jar             R8（必须，自带 d8 8.2 有内部类 NPE）
+└── android.jar           API 34
+```
 
-r8 可从 Google Maven 取：`com/android/tools/r8/<version>/r8-<version>.jar`
+> R8 从 Google Maven 取：`com/android/tools/r8/<version>/r8-<version>.jar`
 
-### 2. 签名密钥
-
-**不需要手动准备**：找不到 keystore 时构建脚本会自动生成一个开发用密钥
-（`CN=MokrRun Dev`，口令取 `MOKR_KS_PASS`，默认 `changeme`），clone 下来即可直接构建。
-
-想用自己的密钥就提前生成好并指向它：
+### 2. 构建
 
 ```powershell
-keytool -genkeypair -keystore release.jks -alias app `
-        -keyalg RSA -keysize 2048 -validity 10000 `
-        -storepass yourpass -keypass yourpass `
-        -dname "CN=Your Name"
+$env:MOKR_TOOLS  = "D:\android-tools"
+$env:MOKR_KS_PASS = "yourpass"      # 可选
+
+.\build.ps1                          # 主模块
+.\tools\probe\build-probe.ps1        # 测试探针
+.\install.ps1                        # 安装到已连接的设备
 ```
 
-> 自动生成的密钥只适合本地调试。要对外发布请使用自己的密钥并妥善保管——
-> 换了签名后，设备上已装的旧版本会因签名不一致而无法覆盖升级。
+第一次构建会自动生成一个开发用 keystore（`CN=MokrRun Dev`），不需要手动准备。
 
-### 3. 设置环境变量并构建
+> 工程放在**中文路径**下会失败（aapt2 / d8 的限制），用 `mklink /J` 映射到纯 ASCII 路径。
 
-```powershell
-$env:MOKR_TOOLS  = "D:\android-tools"     # 上表那个目录
-$env:MOKR_KS      = ".\release.jks"        # 或放在仓库根目录，默认 ./release.jks
-$env:MOKR_KS_PASS = "yourpass"             # 默认 changeme
+## ❓常见问题
 
-.\build.ps1                                # 主模块
-.\tools\probe\build-probe.ps1              # 探针
-.\install.ps1                              # 安装到已连接设备
-```
+**Q：装上之后步数正常但位置不动？**
+A：大概率是目标应用重启前加载的旧模块。强制停止它再打开。
 
-`install.ps1` 默认调用 PATH 里的 `adb`，可用 `$env:ADB` 指定绝对路径；安装后会自动授予
-`SYSTEM_ALERT_WINDOW`、`WRITE_SECURE_SETTINGS` 和定位权限。
+**Q：悬浮窗不出现？**
+A：检查系统设置里是否允许「随心跑」显示在其他应用上层。
 
-> **中文路径注意**：aapt2 / d8 处理非 ASCII 路径会失败。如果工程放在中文目录下，
-> 建议用 junction 映射到纯 ASCII 路径，例如
-> `mklink /J C:\MokrRun "D:\某中文目录\MokrRun"`。
+**Q：点了开始但位置没变？**
+A：确认已经画过路线。只有起点没有路线时，位置会固定停在起点。
 
-版本号自动递增（`version.txt`），构建时注入 manifest 并生成 `BuildConfigTag.java`，界面上能看到当前装的是哪一版。
+**Q：换了签名后装不上？**
+A：Android 不允许签名不同的同包名应用覆盖安装，先卸载旧版本。
 
----
+## 📄 许可
 
-## 四、首次部署清单
+[MIT](LICENSE)
 
-1. **授予配置写入权限**（一次性）：
-   ```powershell
-   adb shell pm grant com.dsh.mokr android.permission.WRITE_SECURE_SETTINGS
-   ```
-
-2. **授予悬浮窗权限**：
-   ```powershell
-   adb shell appops set com.dsh.mokr SYSTEM_ALERT_WINDOW allow
-   ```
-
-3. **在 LSPosed 中启用模块并勾选体适能**（若管理器进不去，可直接改配置库）：
-   ```powershell
-   # 导出 /data/adb/lspd/config/modules_config.db，插入：
-   #   modules       : (com.dsh.mokr, apk_path)
-   #   modules_state : (com.dsh.mokr, 0, 1, 0)
-   #   scope         : (com.dsh.mokr, com.bxkj.student, 0)
-   # 推回并清掉 -wal/-shm，然后重启
-   ```
-
-4. **关闭 MIUI 对体适能的省电限制**（否则后台被杀会中断模拟）
-
----
-
-## 五、使用流程
-
-1. 打开 **随心跑** → 「路线」→ 新建路线 → 地图上点几个点 → 保存
-2. 「设置」里调速度（默认 3.0 m/s）、步频（默认 2.2 步/秒）
-3. 回首页 → 「开始模拟」→ 悬浮窗出现，App 自动退到后台
-4. 切到 **体适能**，进入跑步页面
-5. 点悬浮窗「开始」，位置和步数开始同步推进
-
----
-
-## 六、已知限制
-
-| 限制 | 说明 |
-|---|---|
-| **探针不被注入** | `com.dsh.mokr.probe` 已写入 LSPosed 的 scope 表且格式与其它模块一致，但 LSPosed 完全不尝试注入（logcat 无任何相关日志），重启无效。暂时用体适能 + logcat 验证 |
-| **依赖一次 adb 授权** | `WRITE_SECURE_SETTINGS` 必须用 adb 授予，重启不丢失 |
-| **MIUI 自启动限制** | 广播唤醒模块 App 会被拦，因此 hook 侧无法主动向 App 请求配置；改成 App 主动下发 |
-| **默认占位坐标** | 引擎初值为中性坐标，只有 App 下发起点后才接管位置 |
-| **人脸检测** | 不做绕过，由用户本人通过 |
-| **仅主进程注入** | `pushcore` 子进程跳过，避免引擎跑两份 |
-
----
-
-## 七、体适能判定条件（供调参参考）
-
-- 距离 ≥ 2.0 km，时间 5–16 分钟，步数 ≥ 1200，上限 5.0 km
-- 必经点位：田径场大灯2、A1宿舍楼、田径场大灯、1号教学楼南侧
-- 随机人脸检测 2 次
-- 每天只算一次有效
-
-按默认参数 3.0 m/s + 2.2 步/秒：跑 2 km 需要约 11 分钟、2600 步，落在判定区间内。
-
----
-
-## 八、日志
-
-```powershell
-adb logcat -v time -s MokrRun:* XposedBridge:* | Select-String "MokrRun"
-```
-
-App 内「设置 → 开发者 → 复制 adb 抓日志命令」可以一键复制这条命令。
-
-常见日志：
-
-```
-MokrRun: attached to com.bxkj.student process=... main=true
-MokrRun: config from Settings.Global speed=3.0 cadence=2.2 stride=1.1 routeLen=288
-MokrRun: route loaded, 6 points, first=<lat>,<lon>
-MokrRun: tick dist=15.8m steps=11 pos=<lat>,<lon>
-MokrRun: anti-detect hooked Location.isMock -> false
-```
+本项目仅供学习 Android 定位与传感器 API 的 hook 技术使用。

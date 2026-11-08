@@ -148,19 +148,6 @@
                 android:background="@color/divider" />
 
             <TextView
-                android:id="@+id/toolRoot"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:gravity="center_vertical"
-                android:text="检测 Root 能力"
-                style="@style/CardTitle" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider" />
-
-            <TextView
                 android:id="@+id/toolResetParams"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
