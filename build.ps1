@@ -1,4 +1,4 @@
-# 随心跑 (MokrRun) build script
+﻿# 随心跑 (MokrRun) build script
 # aapt2 -> javac -> d8 -> assemble -> zipalign -> apksigner
 #
 # 需要的外部环境（可用环境变量覆盖）：
@@ -118,10 +118,18 @@ python $assemblePy 2>&1 | ForEach-Object { Write-Host $_ }
 & $zipalign -p -f 4 (Join-Path $out "unsigned.apk") (Join-Path $out "aligned.apk") 2>&1 | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw "zipalign failed ($LASTEXITCODE)" }
 
+# keystore 缺失时自动生成一个开发用密钥，保证 clone 后可直接构建
 if (-not (Test-Path $keystore)) {
-    Write-Host "keystore not found: $keystore" -ForegroundColor Red
-    Write-Host "生成一个: keytool -genkeypair -keystore release.jks -alias app -keyalg RSA -keysize 2048 -validity 10000 -storepass changeme -keypass changeme -dname CN=MokrRun" -ForegroundColor Yellow
-    throw "keystore missing"
+    Write-Host "keystore not found, generating a dev one: $keystore" -ForegroundColor Yellow
+    $keytool = Join-Path $jdkBin "keytool.exe"
+    & $keytool -genkeypair -keystore $keystore -alias app `
+        -keyalg RSA -keysize 2048 -validity 10000 `
+        -storepass $ksPass -keypass $ksPass `
+        -dname "CN=MokrRun Dev" -noprompt 2>&1 | ForEach-Object { Write-Host $_ }
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $keystore)) {
+        throw "failed to generate keystore"
+    }
+    Write-Host "dev keystore created (仅用于本地调试，不要用它发布)" -ForegroundColor Yellow
 }
 
 & $javaExe -jar $apksignerJar sign --ks $keystore --ks-pass "pass:$ksPass" --key-pass "pass:$ksPass" --out (Join-Path $out "MokrRun.apk") (Join-Path $out "aligned.apk") 2>&1 | ForEach-Object { Write-Host $_ }

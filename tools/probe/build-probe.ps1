@@ -72,6 +72,15 @@ $assemble | Out-File -FilePath "$out\assemble.py" -Encoding ascii
 python "$out\assemble.py" 2>&1 | ForEach-Object { Write-Host $_ }
 
 & $zipalign -p -f 4 "$out\unsigned.apk" "$out\aligned.apk" 2>&1 | ForEach-Object { Write-Host $_ }
+if (-not (Test-Path $keystore)) {
+    Write-Host "keystore not found, generating a dev one: $keystore" -ForegroundColor Yellow
+    $keytool = Join-Path $jdkBin "keytool.exe"
+    & $keytool -genkeypair -keystore $keystore -alias app `
+        -keyalg RSA -keysize 2048 -validity 10000 `
+        -storepass $ksPass -keypass $ksPass `
+        -dname "CN=MokrRun Dev" -noprompt 2>&1 | ForEach-Object { Write-Host $_ }
+}
+
 & $javaExe -jar $apksignerJar sign --ks $keystore --ks-pass "pass:$ksPass" --key-pass "pass:$ksPass" --out "$out\Probe.apk" "$out\aligned.apk" 2>&1 | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw "apksigner failed" }
 

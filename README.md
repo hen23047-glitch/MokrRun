@@ -86,16 +86,22 @@ aapt2 compile → aapt2 link → javac → d8 → zip → zipalign → apksigner
 
 r8 可从 Google Maven 取：`com/android/tools/r8/<version>/r8-<version>.jar`
 
-### 2. 准备签名密钥
+### 2. 签名密钥
 
-仓库不含 `.jks`，需要自己生成一个：
+**不需要手动准备**：找不到 keystore 时构建脚本会自动生成一个开发用密钥
+（`CN=MokrRun Dev`，口令取 `MOKR_KS_PASS`，默认 `changeme`），clone 下来即可直接构建。
+
+想用自己的密钥就提前生成好并指向它：
 
 ```powershell
 keytool -genkeypair -keystore release.jks -alias app `
         -keyalg RSA -keysize 2048 -validity 10000 `
         -storepass yourpass -keypass yourpass `
-        -dname "CN=MokrRun"
+        -dname "CN=Your Name"
 ```
+
+> 自动生成的密钥只适合本地调试。要对外发布请使用自己的密钥并妥善保管——
+> 换了签名后，设备上已装的旧版本会因签名不一致而无法覆盖升级。
 
 ### 3. 设置环境变量并构建
 
