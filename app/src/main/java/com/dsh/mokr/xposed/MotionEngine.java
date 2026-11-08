@@ -31,13 +31,13 @@ public final class MotionEngine {
     private static volatile float sStride = 1.1f;
 
     /** 路线：index 0 是起点，后面是途经点 */
-    private static volatile double[] sLat = new double[]{23.067800};
-    private static volatile double[] sLon = new double[]{113.971400};
+    private static volatile double[] sLat = new double[]{39.908700};
+    private static volatile double[] sLon = new double[]{116.397500};
     private static volatile String sLastOrigin = "";
     private static volatile int sLastRouteHash = 0;
 
-    private static volatile double sCurLat = 23.067800;
-    private static volatile double sCurLon = 113.971400;
+    private static volatile double sCurLat = 39.908700;
+    private static volatile double sCurLon = 116.397500;
     private static volatile double sDistTotal = 0.0;
     private static volatile double sSegProgress = 0.0;
     private static volatile int sSeg = 0;

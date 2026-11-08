@@ -1,8 +1,8 @@
 ﻿# 随心跑探针 (probe) build script
 $ErrorActionPreference = "Continue"
 
-$root   = "C:\MokrRun\tools\probe"
-$tools  = "C:\mokrtools"
+$root   = Split-Path -Parent $MyInvocation.MyCommand.Path
+$tools  = if ($env:MOKR_TOOLS) { $env:MOKR_TOOLS } else { Join-Path (Split-Path -Parent (Split-Path -Parent $root)) "build\tools" }
 $out    = "$root\build"
 $manifest = "$root\AndroidManifest.xml"
 $javad  = "$root\src"
@@ -18,9 +18,11 @@ $bt      = "$tools\bt\android-14"
 $aapt2   = "$bt\aapt2.exe"
 $zipalign= "$bt\zipalign.exe"
 $apksignerJar = "$bt\lib\apksigner.jar"
-$d8jar   = "C:\mokrtools\r8\r8.jar"
+$r8Local = Join-Path $tools "r8\r8.jar"
+$d8jar = if (Test-Path $r8Local) { $r8Local } else { Join-Path $tools "bt\android-14\lib\d8.jar" }
 $androidJar = "$tools\android.jar"
-$keystore = "C:\MokrRun\dsh.jks"
+$keystore = if ($env:MOKR_KS) { $env:MOKR_KS } else { Join-Path (Split-Path -Parent (Split-Path -Parent $root)) "release.jks" }
+$ksPass = if ($env:MOKR_KS_PASS) { $env:MOKR_KS_PASS } else { "changeme" }
 
 function Step($n, $msg) { Write-Host ("== [{0}/6] {1} ==" -f $n, $msg) -ForegroundColor Cyan }
 
@@ -50,9 +52,9 @@ if ($LASTEXITCODE -ne 0) { throw "d8 failed" }
 Step 6 "assemble + sign"
 $assemble = @'
 import zipfile, os
-base = r"C:\MokrRun\tools\probe\build\base.apk"
-dex  = r"C:\MokrRun\tools\probe\build\dex\classes.dex"
-outf = r"C:\MokrRun\tools\probe\build\unsigned.apk"
+base = r'$base'
+dex  = r'$dex'
+outf = r'$outf'
 zin = zipfile.ZipFile(base)
 zout = zipfile.ZipFile(outf, "w", zipfile.ZIP_DEFLATED)
 for it in zin.infolist():
@@ -70,7 +72,7 @@ $assemble | Out-File -FilePath "$out\assemble.py" -Encoding ascii
 python "$out\assemble.py" 2>&1 | ForEach-Object { Write-Host $_ }
 
 & $zipalign -p -f 4 "$out\unsigned.apk" "$out\aligned.apk" 2>&1 | ForEach-Object { Write-Host $_ }
-& $javaExe -jar $apksignerJar sign --ks $keystore --ks-pass pass:dshpass --key-pass pass:dshpass --out "$out\Probe.apk" "$out\aligned.apk" 2>&1 | ForEach-Object { Write-Host $_ }
+& $javaExe -jar $apksignerJar sign --ks $keystore --ks-pass "pass:$ksPass" --key-pass "pass:$ksPass" --out "$out\Probe.apk" "$out\aligned.apk" 2>&1 | ForEach-Object { Write-Host $_ }
 if ($LASTEXITCODE -ne 0) { throw "apksigner failed" }
 
 Write-Host "probe built" -ForegroundColor Green

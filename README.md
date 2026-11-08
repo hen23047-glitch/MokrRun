@@ -73,28 +73,48 @@
 aapt2 compile → aapt2 link → javac → d8 → zip → zipalign → apksigner
 ```
 
+### 1. 准备工具链
+
+需要一个目录（下称 `$MOKR_TOOLS`）包含：
+
+| 组件 | 相对路径 | 备注 |
+|---|---|---|
+| JDK（含 javac） | `jdk/` | 21 或 17 均可 |
+| Android build-tools | `bt/android-14/` | 提供 aapt2 / zipalign / apksigner |
+| **r8** | `r8/r8.jar` | **必需**：build-tools 自带的 d8 8.2.2 处理内部类会 NPE |
+| android.jar | `android.jar` | API 34 |
+
+r8 可从 Google Maven 取：`com/android/tools/r8/<version>/r8-<version>.jar`
+
+### 2. 准备签名密钥
+
+仓库不含 `.jks`，需要自己生成一个：
+
 ```powershell
-# 主模块
-C:\MokrRun\build.ps1
-
-# 探针
-C:\MokrRun\tools\probe\build-probe.ps1
-
-# 安装（自动处理 MIUI 两层确认框）
-C:\MokrRun\install.ps1
+keytool -genkeypair -keystore release.jks -alias app `
+        -keyalg RSA -keysize 2048 -validity 10000 `
+        -storepass yourpass -keypass yourpass `
+        -dname "CN=MokrRun"
 ```
 
-工具链：
+### 3. 设置环境变量并构建
 
-| 组件 | 位置 | 备注 |
-|---|---|---|
-| JDK 21 | `C:\mokrtools\jdk` | Temurin |
-| build-tools 34 | `C:\mokrtools\bt\android-14` | aapt2 / zipalign / apksigner |
-| **r8 9.5.29** | `C:\mokrtools\r8\r8.jar` | 关键：build-tools 自带的 d8 8.2.2 遇到内部类/匿名类必崩 |
-| android.jar | `C:\mokrtools\android.jar` | API 34 |
+```powershell
+$env:MOKR_TOOLS  = "D:\android-tools"     # 上表那个目录
+$env:MOKR_KS      = ".\release.jks"        # 或放在仓库根目录，默认 ./release.jks
+$env:MOKR_KS_PASS = "yourpass"             # 默认 changeme
 
-> 中文路径会让 aapt2 / d8 失败，因此用 junction：
-> `C:\MokrRun` → `手机\MokrRun`，`C:\mokrtools` → `手机\build\tools`
+.\build.ps1                                # 主模块
+.\tools\probe\build-probe.ps1              # 探针
+.\install.ps1                              # 安装到已连接设备
+```
+
+`install.ps1` 默认调用 PATH 里的 `adb`，可用 `$env:ADB` 指定绝对路径；安装后会自动授予
+`SYSTEM_ALERT_WINDOW`、`WRITE_SECURE_SETTINGS` 和定位权限。
+
+> **中文路径注意**：aapt2 / d8 处理非 ASCII 路径会失败。如果工程放在中文目录下，
+> 建议用 junction 映射到纯 ASCII 路径，例如
+> `mklink /J C:\MokrRun "D:\某中文目录\MokrRun"`。
 
 版本号自动递增（`version.txt`），构建时注入 manifest 并生成 `BuildConfigTag.java`，界面上能看到当前装的是哪一版。
 
@@ -142,7 +162,7 @@ C:\MokrRun\install.ps1
 | **探针不被注入** | `com.dsh.mokr.probe` 已写入 LSPosed 的 scope 表且格式与其它模块一致，但 LSPosed 完全不尝试注入（logcat 无任何相关日志），重启无效。暂时用体适能 + logcat 验证 |
 | **依赖一次 adb 授权** | `WRITE_SECURE_SETTINGS` 必须用 adb 授予，重启不丢失 |
 | **MIUI 自启动限制** | 广播唤醒模块 App 会被拦，因此 hook 侧无法主动向 App 请求配置；改成 App 主动下发 |
-| **默认两条直线路线** | 若从未画过路线，引擎用内置两点直线（23.0678,113.9714 → 23.0695,113.9714） |
+| **默认占位坐标** | 引擎初值为中性坐标，只有 App 下发起点后才接管位置 |
 | **人脸检测** | 不做绕过，由用户本人通过 |
 | **仅主进程注入** | `pushcore` 子进程跳过，避免引擎跑两份 |
 
@@ -172,7 +192,7 @@ App 内「设置 → 开发者 → 复制 adb 抓日志命令」可以一键复�
 ```
 MokrRun: attached to com.bxkj.student process=... main=true
 MokrRun: config from Settings.Global speed=3.0 cadence=2.2 stride=1.1 routeLen=288
-MokrRun: route loaded, 6 points, first=23.0692606,113.9713943
-MokrRun: tick dist=15.8m steps=11 pos=23.067942,113.971400
+MokrRun: route loaded, 6 points, first=<lat>,<lon>
+MokrRun: tick dist=15.8m steps=11 pos=<lat>,<lon>
 MokrRun: anti-detect hooked Location.isMock -> false
 ```

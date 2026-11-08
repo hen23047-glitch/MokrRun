@@ -1,10 +1,11 @@
 ﻿# 一键安装 MokrRun APK 到手机（处理 MIUI 的两层确认框）
 param(
-    [string]$Apk = "C:\MokrRun\build\MokrRun.apk",
+    [string]$Apk = "",
     [string]$Pkg = "com.dsh.mokr"
 )
+if (-not $Apk) { $Apk = Join-Path $PSScriptRoot "build\MokrRun.apk" }
 $ErrorActionPreference = "Continue"
-$adb = "C:\Program Files\ASUS\GlideX\adb.exe"
+$adb = if ($env:ADB) { $env:ADB } else { "adb" }
 
 function Dump($path) {
     & $adb shell "uiautomator dump $path" 2>&1 | Out-Null
