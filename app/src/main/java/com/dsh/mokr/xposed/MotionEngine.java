@@ -231,6 +231,39 @@ public final class MotionEngine {
         }
     }
 
+
+    /**
+     * 从模块 App 的启动 Intent 里应用配置（零权限通道）。
+     * cfg 格式："speed=3.0;cadence=2.4;stride=1.25;anti=1"
+     */
+    public static void applyFromIntent(String cfg, String origin, String waypoints, int run) {
+        float sp = -1f, cd = -1f, st = -1f;
+        if (cfg != null) {
+            String[] parts = cfg.split(";");
+            for (int i = 0; i < parts.length; i++) {
+                String kv = parts[i].trim();
+                int eq = kv.indexOf('=');
+                if (eq <= 0) continue;
+                String k = kv.substring(0, eq).trim();
+                String v = kv.substring(eq + 1).trim();
+                try {
+                    if ("speed".equals(k)) sp = Float.parseFloat(v);
+                    else if ("cadence".equals(k)) cd = Float.parseFloat(v);
+                    else if ("stride".equals(k)) st = Float.parseFloat(v);
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        applyOriginRoute(origin, waypoints);
+        applyConfigInner(sp, cd, st, waypoints);
+        sMode = run;
+        sRunCheckedAt = System.currentTimeMillis();
+        sConfigLoaded = true;
+        XposedBridge.log(TAG + ": applied from intent speed=" + sSpeed
+                + " cadence=" + sCadence + " stride=" + sStride
+                + " mode=" + run + " points=" + sLat.length);
+    }
+
     /** 只更新参数，不动路线（路线由 applyOriginRoute 负责） */
     private static void applyConfigInner(float speed, float cadence, float stride, String route) {
         if (speed > 0.1f) sSpeed = speed;

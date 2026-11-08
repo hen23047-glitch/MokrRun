@@ -21,6 +21,7 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.dsh.mokr.data.ConfigSync;
 import com.dsh.mokr.data.Store;
@@ -236,14 +237,15 @@ public class FloatService extends Service {
             running = !running;
             if (running) {
                 startedAt = System.currentTimeMillis();
-                // 1 = running; position keeps advancing
-                Settings.Global.putString(getContentResolver(), RUN_KEY, "1");
+                Store.setRunMode(FloatService.this, 1);
+                // 关键：把配置随 Intent 送进体适能进程（零权限通道）
+                launchTargetWithConfig();
                 label.setText("暂停");
                 btnToggle.setBackgroundColor(0xFFB54708);
             } else {
                 accumulated += System.currentTimeMillis() - startedAt;
                 // 2 = paused; the fake position stays frozen where it is
-                Settings.Global.putString(getContentResolver(), RUN_KEY, "2");
+                Store.setRunMode(FloatService.this, 2);
                 label.setText("继续");
                 btnToggle.setBackgroundColor(0xFF3482FF);
             }
@@ -252,6 +254,28 @@ public class FloatService extends Service {
     }
 
 
+    /** 带配置拉起体适能：SINGLE_TOP + REORDER_TO_FRONT，已在前台时只走 onNewIntent */
+    private void launchTargetWithConfig() {
+        try {
+            Intent i = getPackageManager().getLaunchIntentForPackage("com.bxkj.student");
+            if (i == null) {
+                Toast.makeText(this, "没找到体适能，请确认已安装", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            i.putExtra("mokr_cfg", ConfigSync.buildLine(this));
+            double[] o = Store.origin(this);
+            i.putExtra("mokr_origin", o == null ? "" : (o[0] + "," + o[1]));
+            i.putExtra("mokr_route", ConfigSync.waypointsJson(this));
+            i.putExtra("mokr_run", running ? 1 : 2);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(i);
+        } catch (Throwable t) {
+            Toast.makeText(this, "拉起体适能失败：" + t, Toast.LENGTH_SHORT).show();
+        }
+    }
+
     /** reset the session and close the panel */
     class StopClick implements View.OnClickListener {
         @Override public void onClick(View v) {
@@ -259,7 +283,7 @@ public class FloatService extends Service {
             startedAt = 0L;
             accumulated = 0L;
             try {
-                Settings.Global.putString(getContentResolver(), RUN_KEY, "0");
+                Store.setRunMode(FloatService.this, 0);
             } catch (Throwable ignored) {}
             stopSelf();
         }
